@@ -967,112 +967,6 @@ function importJSON(file) {
   reader.readAsText(file);
 }
 
-function getShareURL() {
-  const party = getCurrentParty();
-  if (!party) return '';
-
-  const data = {
-    v: '1',
-    p: {
-      n: party.name,
-      d: party.date,
-      s: party.settings
-    },
-    m: party.participants.map(p => ({ n: p.name, c: p.color })),
-    i: party.items.map(item => ({
-      n: item.name,
-      a: item.amountMinor,
-      q: item.qty,
-      t: item.tax,
-      p: party.participants.findIndex(x => x.id === item.payerId),
-      m: item.mode,
-      s: (item.selection || []).map(id => party.participants.findIndex(x => x.id === id))
-    }))
-  };
-
-  const json = JSON.stringify(data);
-  const encoded = btoa(unescape(encodeURIComponent(json)));
-  return window.location.origin + window.location.pathname + '#' + encoded;
-}
-
-function loadFromURL() {
-  const hash = window.location.hash.slice(1);
-  if (!hash) return false;
-
-  try {
-    const json = decodeURIComponent(escape(atob(hash)));
-    const data = JSON.parse(json);
-
-    if (!data.p || !data.m) return false;
-
-    const participants = data.m.map(m => ({
-      id: uuid(),
-      name: m.n,
-      color: m.c || '#6B7280',
-      note: ''
-    }));
-
-    const items = (data.i || []).map(item => ({
-      id: uuid(),
-      name: item.n,
-      amountMinor: item.a,
-      qty: item.q || 1,
-      tax: item.t ?? 10,
-      payerId: participants[item.p]?.id || participants[0]?.id,
-      mode: item.m || 'equal',
-      selection: (item.s || []).map(idx => participants[idx]?.id).filter(Boolean)
-    }));
-
-    const party = {
-      id: uuid(),
-      name: data.p.n || 'URL共有',
-      date: data.p.d || today(),
-      currency: 'JPY',
-      settings: data.p.s || { ...state.settings },
-      participants,
-      items
-    };
-
-    state.parties.unshift(party);
-    state.currentPartyId = party.id;
-    saveState();
-    window.location.hash = '';
-    return true;
-  } catch (err) {
-    console.error('URL load error:', err);
-    return false;
-  }
-}
-
-// =====================================================
-// QRコード生成（シンプル実装）
-// =====================================================
-function generateQR(text, canvas, size = 200) {
-  // 簡易QRコード生成（実際のQRコードライブラリの代わりにテキスト表示）
-  const ctx = canvas.getContext('2d');
-  canvas.width = size;
-  canvas.height = size;
-
-  // 背景
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, size, size);
-
-  // QRコードの代わりにURL短縮表示
-  ctx.fillStyle = '#000';
-  ctx.font = '12px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  
-  const lines = ['QRコード', '(URL共有を', '使用してください)'];
-  lines.forEach((line, i) => {
-    ctx.fillText(line, size / 2, size / 2 + (i - 1) * 20);
-  });
-
-  // 枠
-  ctx.strokeStyle = '#ccc';
-  ctx.strokeRect(0, 0, size, size);
-}
-
 // =====================================================
 // テーマ切替
 // =====================================================
@@ -1279,21 +1173,7 @@ function bindEvents() {
     copyToClipboard(getShareText());
   });
 
-  $('#btnShowQR').addEventListener('click', () => {
-    const qrPanel = $('#qrPanel');
-    qrPanel.classList.toggle('hidden');
-    if (!qrPanel.classList.contains('hidden')) {
-      generateQR(getShareURL(), $('#qrCanvas'));
-    }
-  });
-
   $('#btnExportJSON').addEventListener('click', exportJSON);
-
-  $('#btnShareURL').addEventListener('click', () => {
-    const url = getShareURL();
-    copyToClipboard(url);
-    showToast(t('urlCopied'), 'success');
-  });
 
   // 設定モーダル
   $('#btnSaveSettings').addEventListener('click', () => {
@@ -1411,14 +1291,8 @@ function init() {
   applyI18n();
   bindEvents();
 
-  // URL共有から読み込み
-  if (loadFromURL()) {
-    showView('viewEdit');
-    renderEdit();
-  } else {
-    showView('viewHome');
-    renderHome();
-  }
+  showView('viewHome');
+  renderHome();
 
   // テーマボタンの初期アイコン
   const icons = { auto: '🌓', light: '☀️', dark: '🌙' };
