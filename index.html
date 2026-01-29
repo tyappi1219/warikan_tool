@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="割り勘ツール - 公平で簡単な精算計算">
+  <title>割り勘ツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">💰 <span data-i18n="appTitle">割り勘ツール</span></h1>
+    <nav class="topbar-actions">
+      <button type="button" id="btnLang" class="btn btn-icon" title="言語切替" aria-label="言語切替">🌐</button>
+      <button type="button" id="btnTheme" class="btn btn-icon" title="テーマ切替" aria-label="テーマ切替">🌙</button>
+      <button type="button" id="btnSettings" class="btn btn-icon" title="設定" aria-label="設定">⚙️</button>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- ホーム画面：パーティ一覧 -->
+    <section id="viewHome" class="view" aria-labelledby="homeTitle">
+      <div class="section-header">
+        <h2 id="homeTitle" data-i18n="partyList">パーティ一覧</h2>
+        <button type="button" id="btnNewParty" class="btn btn-primary">
+          <span aria-hidden="true">+</span> <span data-i18n="newParty">新規作成</span>
+        </button>
+      </div>
+      <ul id="partyList" class="party-list" role="list" aria-label="パーティ一覧"></ul>
+      <div id="emptyState" class="empty-state">
+        <p data-i18n="noParties">パーティがありません。新規作成してください。</p>
+      </div>
+    </section>
+
+    <!-- 編集画面 -->
+    <section id="viewEdit" class="view hidden" aria-labelledby="editTitle">
+      <div class="section-header">
+        <button type="button" id="btnBackHome" class="btn btn-ghost" aria-label="戻る">← <span data-i18n="back">戻る</span></button>
+        <input type="text" id="partyName" class="input-title" placeholder="パーティ名" aria-label="パーティ名">
+        <input type="date" id="partyDate" class="input-date" aria-label="開催日">
+      </div>
+
+      <div class="edit-layout">
+        <!-- 参加者パネル -->
+        <aside class="panel participants-panel" aria-labelledby="participantsTitle">
+          <div class="panel-header">
+            <h3 id="participantsTitle" data-i18n="participants">参加者</h3>
+            <button type="button" id="btnAddParticipant" class="btn btn-sm btn-primary" aria-label="参加者追加">+</button>
+          </div>
+          <ul id="participantList" class="participant-list" role="list"></ul>
+        </aside>
+
+        <!-- アイテムテーブル -->
+        <section class="panel items-panel" aria-labelledby="itemsTitle">
+          <div class="panel-header">
+            <h3 id="itemsTitle" data-i18n="items">アイテム</h3>
+            <button type="button" id="btnAddItem" class="btn btn-sm btn-primary" aria-label="アイテム追加">+</button>
+          </div>
+          <div class="items-table-wrapper">
+            <table class="items-table" id="itemsTable">
+              <thead>
+                <tr>
+                  <th data-i18n="itemName">品名</th>
+                  <th data-i18n="amount">金額</th>
+                  <th data-i18n="qty">数量</th>
+                  <th data-i18n="tax">税率</th>
+                  <th data-i18n="payer">支払者</th>
+                  <th data-i18n="splitMode">按分</th>
+                  <th data-i18n="targetParticipants">対象者</th>
+                  <th data-i18n="actions">操作</th>
+                </tr>
+              </thead>
+              <tbody id="itemsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- サマリ -->
+      <div class="summary-bar">
+        <div class="summary-item">
+          <span data-i18n="totalAmount">合計金額</span>
+          <strong id="totalAmount">¥0</strong>
+        </div>
+        <div class="summary-item">
+          <span data-i18n="perPerson">一人あたり</span>
+          <strong id="perPerson">¥0</strong>
+        </div>
+        <button type="button" id="btnCalcResult" class="btn btn-primary btn-lg" data-i18n="showResult">精算結果を見る</button>
+      </div>
+    </section>
+
+    <!-- 結果画面 -->
+    <section id="viewResult" class="view hidden" aria-labelledby="resultTitle">
+      <div class="section-header">
+        <button type="button" id="btnBackEdit" class="btn btn-ghost" aria-label="戻る">← <span data-i18n="backToEdit">編集に戻る</span></button>
+        <h2 id="resultTitle" data-i18n="settlementResult">精算結果</h2>
+      </div>
+
+      <!-- 個人別内訳 -->
+      <div class="result-section">
+        <h3 data-i18n="breakdown">個人別内訳</h3>
+        <div id="breakdownCards" class="breakdown-cards"></div>
+      </div>
+
+      <!-- 送金指示 -->
+      <div class="result-section">
+        <h3 data-i18n="paymentInstructions">送金指示</h3>
+        <div id="paymentCards" class="payment-cards"></div>
+      </div>
+
+      <!-- 共有 -->
+      <div class="share-section">
+        <h3 data-i18n="share">共有</h3>
+        <div class="share-actions">
+          <button type="button" id="btnCopyText" class="btn btn-secondary" data-i18n="copyText">テキストコピー</button>
+          <button type="button" id="btnShowQR" class="btn btn-secondary" data-i18n="showQR">QRコード</button>
+          <button type="button" id="btnExportJSON" class="btn btn-secondary" data-i18n="exportJSON">JSONエクスポート</button>
+          <button type="button" id="btnShareURL" class="btn btn-secondary" data-i18n="shareURL">URL共有</button>
+        </div>
+        <div id="qrPanel" class="qr-panel hidden">
+          <canvas id="qrCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 設定モーダル -->
+  <div id="modalSettings" class="modal hidden" role="dialog" aria-labelledby="settingsModalTitle" aria-modal="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="settingsModalTitle" data-i18n="settings">設定</h2>
+        <button type="button" class="btn btn-icon modal-close" data-close-modal aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="settingRoundUnit" data-i18n="roundUnit">端数単位</label>
+          <select id="settingRoundUnit" class="select">
+            <option value="1">1円</option>
+            <option value="5">5円</option>
+            <option value="10">10円</option>
+            <option value="100">100円</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="settingRoundMode" data-i18n="roundMode">丸めモード</label>
+          <select id="settingRoundMode" class="select">
+            <option value="nearest" data-i18n="roundNearest">四捨五入</option>
+            <option value="ceil" data-i18n="roundCeil">切り上げ</option>
+            <option value="floor" data-i18n="roundFloor">切り捨て</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="settingDefaultTax" data-i18n="defaultTax">デフォルト税率 (%)</label>
+          <input type="number" id="settingDefaultTax" class="input" value="10" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label for="settingCurrency" data-i18n="currency">通貨</label>
+          <select id="settingCurrency" class="select">
+            <option value="JPY">JPY (円)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnSaveSettings" class="btn btn-primary" data-i18n="save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 参加者追加モーダル -->
+  <div id="modalParticipant" class="modal hidden" role="dialog" aria-labelledby="participantModalTitle" aria-modal="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="participantModalTitle" data-i18n="addParticipant">参加者追加</h2>
+        <button type="button" class="btn btn-icon modal-close" data-close-modal aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="participantName" data-i18n="name">名前</label>
+          <input type="text" id="participantName" class="input" placeholder="名前を入力" required>
+        </div>
+        <div class="form-group">
+          <label for="participantColor" data-i18n="color">カラー</label>
+          <input type="color" id="participantColor" class="input-color" value="#F59E0B">
+        </div>
+        <div class="form-group">
+          <label for="participantNote" data-i18n="note">メモ</label>
+          <input type="text" id="participantNote" class="input" placeholder="メモ（任意）">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnCancelParticipant" class="btn btn-ghost" data-close-modal data-i18n="cancel">キャンセル</button>
+        <button type="button" id="btnSaveParticipant" class="btn btn-primary" data-i18n="add">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- アイテム追加モーダル -->
+  <div id="modalItem" class="modal hidden" role="dialog" aria-labelledby="itemModalTitle" aria-modal="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h2 id="itemModalTitle" data-i18n="addItem">アイテム追加</h2>
+        <button type="button" class="btn btn-icon modal-close" data-close-modal aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="itemName" data-i18n="itemName">品名</label>
+            <input type="text" id="itemName" class="input" placeholder="品名を入力" required>
+          </div>
+          <div class="form-group">
+            <label for="itemAmount" data-i18n="amount">金額</label>
+            <input type="number" id="itemAmount" class="input" placeholder="0" min="0" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="itemQty" data-i18n="qty">数量</label>
+            <input type="number" id="itemQty" class="input" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label for="itemTax" data-i18n="tax">税率 (%)</label>
+            <select id="itemTax" class="select">
+              <option value="0">0% (税なし)</option>
+              <option value="8">8% (軽減税率)</option>
+              <option value="10" selected>10% (標準税率)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="itemPayer" data-i18n="payer">支払者</label>
+            <select id="itemPayer" class="select"></select>
+          </div>
+          <div class="form-group">
+            <label for="itemMode" data-i18n="splitMode">按分モード</label>
+            <select id="itemMode" class="select">
+              <option value="equal" data-i18n="modeEqual">等分</option>
+              <option value="selected" data-i18n="modeSelected">個別選択</option>
+              <option value="ratio" data-i18n="modeRatio">比率指定</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="itemSelectionGroup">
+          <label data-i18n="selectParticipants">対象者を選択</label>
+          <div id="itemSelection" class="checkbox-group"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnCancelItem" class="btn btn-ghost" data-close-modal data-i18n="cancel">キャンセル</button>
+        <button type="button" id="btnSaveItem" class="btn btn-primary" data-i18n="add">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- インポートモーダル -->
+  <div id="modalImport" class="modal hidden" role="dialog" aria-labelledby="importModalTitle" aria-modal="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="importModalTitle" data-i18n="importJSON">JSONインポート</h2>
+        <button type="button" class="btn btn-icon modal-close" data-close-modal aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="dropzone" id="dropzone">
+          <p data-i18n="dropzoneText">JSONファイルをドラッグ＆ドロップ<br>またはクリックして選択</p>
+          <input type="file" id="fileInput" accept=".json" hidden>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト -->
+  <div id="toastContainer" class="toast-container" role="alert" aria-live="polite"></div>
+
+  <footer class="footer">
+    <p>© 2026 割り勘ツール | <button type="button" id="btnImport" class="link-btn" data-i18n="import">インポート</button></p>
+  </footer>
+
+  <script src="core.js"></script>
+</body>
+</html>
