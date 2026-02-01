@@ -451,6 +451,49 @@ console.log('【テスト】等分モードで選択対象がある場合に選�
 }
 console.log('');
 
+// チェック: 複数人立て替え時に送金が最小化される（相殺最適化）
+console.log('【テスト】複数人立て替え＆送金相殺最適化：各自の送金が1回で完結');
+{
+  const party = {
+    participants: [
+      { id: 'A', name: 'A' },
+      { id: 'B', name: 'B' },
+      { id: 'C', name: 'C' },
+      { id: 'D', name: 'D' }
+    ],
+    items: [
+      { id: 'i1', name: 'ランチ', amountMinor: 1000, qty: 1, payerId: 'A', mode: 'equal', selection: [] },
+      { id: 'i2', name: '飲料', amountMinor: 1200, qty: 1, payerId: 'B', mode: 'equal', selection: [] },
+      { id: 'i3', name: 'デザート', amountMinor: 800, qty: 1, payerId: 'C', mode: 'equal', selection: [] }
+    ],
+    settings: { roundUnit: 1, roundMode: 'nearest' }
+  };
+
+  const result = calculateSettlement(party);
+  // 合計: 3000円、一人あたり: 750円
+  // A: paid=1000, shouldPay=750 → balance=+250（受取）
+  // B: paid=1200, shouldPay=750 → balance=+450（受取）
+  // C: paid=800, shouldPay=750 → balance=+50（受取）
+  // D: paid=0, shouldPay=750 → balance=-750（支払）
+  
+  assertEqual(result.total, 3000, '合計は3000');
+  assertEqual(result.breakdown.find(b => b.id === 'A').balance, 250, 'Aは250受け取る');
+  assertEqual(result.breakdown.find(b => b.id === 'B').balance, 450, 'Bは450受け取る');
+  assertEqual(result.breakdown.find(b => b.id === 'C').balance, 50, 'Cは50受け取る');
+  assertEqual(result.breakdown.find(b => b.id === 'D').balance, -750, 'Dは750支払う');
+  
+  // 送金は最小化される：Dが3人に送金（3本）
+  assertEqual(result.payments.length, 3, '送金本数は3本（相殺最適化）');
+  assertEqual(result.payments[0].from, 'D', 'D → ');
+  assertEqual(result.payments[0].to, 'B', 'D → B (450円)');
+  assertEqual(result.payments[0].amountMinor, 450, 'D → B: 450円');
+  assertEqual(result.payments[1].to, 'A', 'D → A (250円)');
+  assertEqual(result.payments[1].amountMinor, 250, 'D → A: 250円');
+  assertEqual(result.payments[2].to, 'C', 'D → C (50円)');
+  assertEqual(result.payments[2].amountMinor, 50, 'D → C: 50円');
+}
+console.log('');
+
 // =====================================================
 // チE��ト結果
 // =====================================================

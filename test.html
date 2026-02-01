@@ -492,6 +492,42 @@
       assertEqual(result.breakdown.find(b => b.id === 'E').shouldPay, 0, '等分+選択', 'Eは0負担（非対象）');
     }
 
+    // チェック: 複数人立て替え時に送金が最小化される（相殺最適化）
+    {
+      const party = {
+        participants: [
+          { id: 'A', name: 'A' },
+          { id: 'B', name: 'B' },
+          { id: 'C', name: 'C' },
+          { id: 'D', name: 'D' }
+        ],
+        items: [
+          { id: 'i1', name: 'ランチ', amountMinor: 1000, qty: 1, 0, payerId: 'A', mode: 'equal', selection: [] },
+          { id: 'i2', name: '飲料', amountMinor: 1200, qty: 1, 0, payerId: 'B', mode: 'equal', selection: [] },
+          { id: 'i3', name: 'デザート', amountMinor: 800, qty: 1, 0, payerId: 'C', mode: 'equal', selection: [] }
+        ],
+        settings: { roundUnit: 1, roundMode: 'nearest' }
+      };
+
+      const result = calculateSettlement(party);
+      // 合計: 3000円、一人あたり: 750円
+      // A: paid=1000, shouldPay=750 → balance=+250
+      // B: paid=1200, shouldPay=750 → balance=+450
+      // C: paid=800, shouldPay=750 → balance=+50
+      // D: paid=0, shouldPay=750 → balance=-750
+      
+      assertEqual(result.total, 3000, '複数立て替え', '合計は3000');
+      assertEqual(result.breakdown.find(b => b.id === 'A').balance, 250, '複数立て替え', 'Aは250受け取る');
+      assertEqual(result.breakdown.find(b => b.id === 'B').balance, 450, '複数立て替え', 'Bは450受け取る');
+      assertEqual(result.breakdown.find(b => b.id === 'C').balance, 50, '複数立て替え', 'Cは50受け取る');
+      assertEqual(result.breakdown.find(b => b.id === 'D').balance, -750, '複数立て替え', 'Dは750支払う');
+      
+      // 送金は最小化される：Dが3人に送金（3本）
+      assertEqual(result.payments.length, 3, '複数立て替え', '送金本数は3本（相殺最適化）');
+      assertEqual(result.payments[0].from, 'D', '複数立て替え', '支払者はD');
+      assertEqual(result.payments[0].amountMinor, 450, '複数立て替え', '最大額は450');
+    }
+
     // =====================================================
     // チE��ト結果表示
     // =====================================================
@@ -506,3 +542,4 @@
   </script>
 </body>
 </html>
+
