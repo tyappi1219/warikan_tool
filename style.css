@@ -145,6 +145,26 @@ body {
   color: var(--brand);
 }
 
+.logo-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: inherit;
+  font-family: inherit;
+  transition: opacity var(--transition);
+}
+
+.logo-btn:hover {
+  opacity: 0.8;
+}
+
+.logo-btn:active {
+  opacity: 0.9;
+}
+
 .topbar-actions {
   display: flex;
   gap: var(--sp-2);
@@ -334,6 +354,24 @@ main {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+}
+
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.date-input-group .input-date {
+  flex: 1;
+  margin: 0;
+}
+
+.date-display {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  padding: var(--sp-2) var(--sp-1);
 }
 
 .input-color {
