@@ -834,11 +834,11 @@ function renderResult() {
   if (result.payments.length === 0) {
     paymentContainer.innerHTML = `<div class="no-payment">${t('noPaymentNeeded')}</div>`;
   } else {
-    paymentContainer.innerHTML = result.payments.map((p, idx) => {
+    paymentContainer.innerHTML = result.payments.map((p) => {
       const from = party.participants.find(x => x.id === p.from);
       const to = party.participants.find(x => x.id === p.to);
       return `
-        <div class="payment-card calc-click" data-type="payment" data-payment-idx="${idx}">
+        <div class="payment-card">
           <div class="payment-from">
             <span class="participant-color" style="background: ${from?.color || '#ccc'}"></span>
             <span>${escapeHtml(from?.name || '?')}</span>
@@ -863,16 +863,6 @@ function renderResult() {
         const b = result.breakdown.find(x => x.id === id);
         const title = `個人内訳: ${b.name}`;
         const body = `支払: ${formatCurrency(b.paid)}\n負担: ${formatCurrency(b.shouldPay)}\n差額: ${b.balance >= 0 ? '+' : ''}${formatCurrency(b.balance)}\n\n計算過程:\n${b.calcSteps}`;
-        $('#calcStepsTitle').textContent = title;
-        $('#calcStepsBody').textContent = body;
-        openModal('modalCalcSteps');
-      } else if (type === 'payment') {
-        const idx = parseInt(el.dataset.paymentIdx, 10);
-        const p = result.payments[idx];
-        const from = party.participants.find(x => x.id === p.from)?.name || p.from;
-        const to = party.participants.find(x => x.id === p.to)?.name || p.to;
-        const title = `送金: ${from} → ${to}`;
-        const body = `金額: ${formatCurrency(p.amountMinor)}\n\n決済過程:\n${p.calcSteps || '—'}`;
         $('#calcStepsTitle').textContent = title;
         $('#calcStepsBody').textContent = body;
         openModal('modalCalcSteps');
