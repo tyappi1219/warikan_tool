@@ -153,7 +153,9 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 function getWeekdayDisplay(dateStr) {
+  if (!dateStr) return '';
   const date = new Date(dateStr + 'T00:00:00');
+  if (isNaN(date.getTime())) return ''; // 無効な日付チェック
   const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
   return weekdayNames[date.getDay()];
 }

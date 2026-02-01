@@ -360,11 +360,14 @@ main {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .date-input-group .input-date {
-  flex: 1;
+  flex: 0 0 auto;
   margin: 0;
+  width: auto;
 }
 
 .date-display {
@@ -372,6 +375,7 @@ main {
   color: var(--text-muted);
   white-space: nowrap;
   padding: var(--sp-2) var(--sp-1);
+  flex-shrink: 0;
 }
 
 .input-color {

@@ -1,13 +1,13 @@
 /**
- * 割り勘チE�Eル - チE��トケース
- * 褁E��な割り勘計算が正確に行われることをテスチE
+ * 割り勘チE�Eル - チE��トケース
+ * 褁E��な割り勘計算が正確に行われることをテスチE
  */
 
 // =====================================================
-// 計算関数をエクスポ�Eト可能にするために、Node.js環墁E��の実行に対忁E
+// 計算関数をエクスポ�Eト可能にするために、Node.js環墁E��の実行に対忁E
 // =====================================================
 
-// チE��ト用の計算関数をこのファイルにコピ�E
+// チE��ト用の計算関数をこのファイルにコピ�E
 function roundAmount(amount, unit, mode) {
   const factor = unit;
   switch (mode) {
@@ -177,7 +177,7 @@ function calculateMinimumPayments(balance, participants) {
 }
 
 // =====================================================
-// チE��トユーチE��リチE��
+// チE��トユーチE��リチE��
 // =====================================================
 
 let testCount = 0;
@@ -204,15 +204,15 @@ function assertArrayEqual(actual, expected, message) {
 }
 
 // =====================================================
-// チE��トケース
+// チE��トケース
 // =====================================================
 
 console.log('========================================');
-console.log('割り勘チE�Eル - チE��トケース実衁E);
+console.log('割り勘チE�Eル - チE��トケース実衁E);
 console.log('========================================\n');
 
-// チE��チE: 基本皁E��等�E割�E�E人で1000冁E��等�E�E�E
-console.log('【テスチE】基本皁E��等�E割�E�E人で1000冁E��等�E�E�E);
+// チE��チE: 基本皁E��等�E割�E�E人で1000冁E��等�E�E�E
+console.log('【テスチE】基本皁E��等�E割�E�E人で1000冁E��等�E�E�E);
 {
   const party = {
     participants: [
@@ -227,16 +227,16 @@ console.log('【テスチE】基本皁E��等�E割�E�E人で1000冁E��等�E�E�E
   };
   
   const result = calculateSettlement(party);
-  assertEqual(result.total, 1000, '合計�E1000冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'A').paid, 1000, 'AぁE000冁E��て替ぁE);
-  assertEqual(result.breakdown.find(b => b.id === 'A').shouldPay, 333 + 1, 'Aの負拁E���E333+1=334冁E��端数調整�E�E);
-  assertEqual(result.breakdown.find(b => b.id === 'B').shouldPay, 333, 'Bの負拁E���E333冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'C').shouldPay, 333, 'Cの負拁E���E333冁E);
+  assertEqual(result.total, 1000, '合計�E1000冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'A').paid, 1000, 'AぁE000冁E��て替ぁE);
+  assertEqual(result.breakdown.find(b => b.id === 'A').shouldPay, 333 + 1, 'Aの負拁E���E333+1=334冁E��端数調整�E�E);
+  assertEqual(result.breakdown.find(b => b.id === 'B').shouldPay, 333, 'Bの負拁E���E333冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'C').shouldPay, 333, 'Cの負拁E���E333冁E);
 }
 console.log('');
 
-// チE��チE: 褁E��アイチE��
-console.log('【テスチE】褁E��アイチE��');
+// チE��チE: 褁E��アイチE��
+console.log('【テスチE】褁E��アイチE��');
 {
   const party = {
     participants: [
@@ -244,7 +244,7 @@ console.log('【テスチE】褁E��アイチE��');
       { id: 'B', name: 'Bob' }
     ],
     items: [
-      { id: 'i1', name: 'ビ�Eル', amountMinor: 1000, qty: 1, payerId: 'A', mode: 'equal', selection: [] },
+      { id: 'i1', name: 'ビ�Eル', amountMinor: 1000, qty: 1, payerId: 'A', mode: 'equal', selection: [] },
       { id: 'i2', name: 'おつまみ', amountMinor: 500, qty: 1, payerId: 'B', mode: 'equal', selection: [] }
     ],
     settings: { roundUnit: 1, roundMode: 'nearest' }
@@ -253,14 +253,14 @@ console.log('【テスチE】褁E��アイチE��');
   const result = calculateSettlement(party);
   const expectedTotal = 1000 + 500;  // 1500
   
-  assertEqual(result.total, expectedTotal, `合計�E${expectedTotal}冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'A').paid, 1000, `AぁE000冁E��て替ぁE);
-  assertEqual(result.breakdown.find(b => b.id === 'B').paid, 500, `BぁE00冁E��て替ぁE);
+  assertEqual(result.total, expectedTotal, `合計�E${expectedTotal}冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'A').paid, 1000, `AぁE000冁E��て替ぁE);
+  assertEqual(result.breakdown.find(b => b.id === 'B').paid, 500, `BぁE00冁E��て替ぁE);
 }
 console.log('');
 
-// チE��チE: 個別選択！EとBだけで按�E、Cは対象外！E
-console.log('【テスチE】個別選択！EとBだけで按�E、Cは対象外！E);
+// チE��チE: 個別選択！EとBだけで按�E、Cは対象外！E
+console.log('【テスチE】個別選択！EとBだけで按�E、Cは対象外！E);
 {
   const party = {
     participants: [
@@ -275,15 +275,15 @@ console.log('【テスチE】個別選択！EとBだけで按�E、Cは対象外
   };
   
   const result = calculateSettlement(party);
-  assertEqual(result.total, 1000, '合計�E1000冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'A').shouldPay, 500, 'Aの負拁E���E500冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'B').shouldPay, 500, 'Bの負拁E���E500冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'C').shouldPay, 0, 'Cの負拁E���E0冁E);
+  assertEqual(result.total, 1000, '合計�E1000冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'A').shouldPay, 500, 'Aの負拁E���E500冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'B').shouldPay, 500, 'Bの負拁E���E500冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'C').shouldPay, 0, 'Cの負拁E���E0冁E);
 }
 console.log('');
 
-// チE��チE: 支払い相殺�E�Eが多く支払っても、Bが多く負拁E��てぁE��ば送E��き送E�߁E�E
-console.log('【テスチE】支払い相殺�E�褁E��アイチE��での送E��き送E�߁E�E);
+// チE��チE: 支払い相殺�E�Eが多く支払っても、Bが多く負拁E��てぁE��ば送E��き送E�߁E�E
+console.log('【テスチE】支払い相殺�E�褁E��アイチE��での送E��き送E�߁E�E);
 {
   const party = {
     participants: [
@@ -292,7 +292,7 @@ console.log('【テスチE】支払い相殺�E�褁E��アイチE��での送E��き
     ],
     items: [
       { id: 'i1', name: 'ラーメン', amountMinor: 100, qty: 1, tax: 0, payerId: 'A', mode: 'equal', selection: [] },
-      { id: 'i2', name: 'ビ�Eル', amountMinor: 1000, qty: 1, tax: 0, payerId: 'B', mode: 'equal', selection: [] }
+      { id: 'i2', name: 'ビ�Eル', amountMinor: 1000, qty: 1, tax: 0, payerId: 'B', mode: 'equal', selection: [] }
     ],
     settings: { roundUnit: 1, roundMode: 'nearest',  }
   };
@@ -301,21 +301,21 @@ console.log('【テスチE】支払い相殺�E�褁E��アイチE��での送E��き
   const aBalance = result.breakdown.find(b => b.id === 'A').balance;
   const bBalance = result.breakdown.find(b => b.id === 'B').balance;
   
-  // A: paid=100, shouldPay=550 ↁEbalance=-450�E�払ぁE���E�E
-  // B: paid=1000, shouldPay=550 ↁEbalance=+450�E�受け取る方�E�E
-  assertEqual(aBalance, -450, 'Aの差額�E-450冁E��払ぁE���E�E);
-  assertEqual(bBalance, 450, 'Bの差額�E+450冁E��受け取る方�E�E);
+  // A: paid=100, shouldPay=550 ↁEbalance=-450�E�払ぁE���E�E
+  // B: paid=1000, shouldPay=550 ↁEbalance=+450�E�受け取る方�E�E
+  assertEqual(aBalance, -450, 'Aの差額�E-450冁E��払ぁE���E�E);
+  assertEqual(bBalance, 450, 'Bの差額�E+450冁E��受け取る方�E�E);
   
-  // payments: BがAに450冁E��E��、ではなくAがBに450冁E��E��
+  // payments: BがAに450冁E��E��、ではなくAがBに450冁E��E��
   const payment = result.payments[0];
-  assertEqual(payment.from, 'A', '送E��允E�EA');
-  assertEqual(payment.to, 'B', '送E��先�EB');
-  assertEqual(payment.amountMinor, 450, '送E��額�E450冁E);
+  assertEqual(payment.from, 'A', '送E��允E�EA');
+  assertEqual(payment.to, 'B', '送E��先�EB');
+  assertEqual(payment.amountMinor, 450, '送E��額�E450冁E);
 }
 console.log('');
 
-// チE��チE: 端数調整�E�E冁E��位での丸めE��E
-console.log('【テスチE】端数調整�E�E冁E��位での丸めE��E);
+// チE��チE: 端数調整�E�E冁E��位での丸めE��E
+console.log('【テスチE】端数調整�E�E冁E��位での丸めE��E);
 {
   const party = {
     participants: [
@@ -331,15 +331,15 @@ console.log('【テスチE】端数調整�E�E冁E��位での丸めE��E);
   
   const result = calculateSettlement(party);
   const taxedAmount = Math.round(1000 * 1.08);  // 1080
-  assertEqual(result.total, taxedAmount, `合計�E${taxedAmount}冁E);
+  assertEqual(result.total, taxedAmount, `合計�E${taxedAmount}冁E);
   
   const totalShouldPay = result.breakdown.reduce((acc, b) => acc + b.shouldPay, 0);
-  assertEqual(totalShouldPay, result.total, '全員の負拁E��合計�E支払い合計と一致');
+  assertEqual(totalShouldPay, result.total, '全員の負拁E��合計�E支払い合計と一致');
 }
 console.log('');
 
-// チE��チE: 褁E��送E��が忁E��な場合（褁E��人間での相殺�E�E
-console.log('【テスチE】褁E��送E��が忁E��な場合！E人でのマッチング�E�E);
+// チE��チE: 褁E��送E��が忁E��な場合（褁E��人間での相殺�E�E
+console.log('【テスチE】褁E��送E��が忁E��な場合！E人でのマッチング�E�E);
 {
   const party = {
     participants: [
@@ -356,25 +356,25 @@ console.log('【テスチE】褁E��送E��が忁E��な場合！E人でのマッ�
   };
   
   const result = calculateSettlement(party);
-  // 合訁E 3100冁E��E人で等�E ↁE吁E�E1033冁E1033冁E1034冁E3100冁E
-  assertEqual(result.total, 3100, '合計�E3100冁E);
+  // 合訁E 3100冁E��E人で等�E ↁE吁E�E1033冁E1033冁E1034冁E3100冁E
+  assertEqual(result.total, 3100, '合計�E3100冁E);
   
   // A: paid=1000, shouldPay≁E033
   // B: paid=2000, shouldPay≁E033
   // C: paid=100, shouldPay≁E034
   const aBalance = result.breakdown.find(b => b.id === 'A').balance;
   const payments = result.payments;
-  assert(payments.length > 0, '褁E��の送E��が忁E��E);
+  assert(payments.length > 0, '褁E��の送E��が忁E��E);
   
-  // 全ての送E��の合計が坁E��すること
+  // 全ての送E��の合計が坁E��すること
   const totalPayment = payments.reduce((acc, p) => acc + p.amountMinor, 0);
   const maxBalance = Math.max(...result.breakdown.map(b => Math.abs(b.balance)));
-  assertEqual(totalPayment, maxBalance, '全送E��額が最大差額と一致');
+  assertEqual(totalPayment, maxBalance, '全送E��額が最大差額と一致');
 }
 console.log('');
 
-// チE��チE: 送E��が不要な場合（�E員が等�Eで支払った場合！E
-console.log('【テスチE】送E��が不要な場合（�E員等額支払い�E�E);
+// チE��チE: 送E��が不要な場合（�E員が等�Eで支払った場合！E
+console.log('【テスチE】送E��が不要な場合（�E員等額支払い�E�E);
 {
   const party = {
     participants: [
@@ -389,15 +389,15 @@ console.log('【テスチE】送E��が不要な場合（�E員等額支払い�E�
   };
   
   const result = calculateSettlement(party);
-  assertEqual(result.total, 2000, '合計�E2000冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'A').balance, 0, 'Aの差額�E0冁E��相殺�E�E);
-  assertEqual(result.breakdown.find(b => b.id === 'B').balance, 0, 'Bの差額�E0冁E��相殺�E�E);
-  assertEqual(result.payments.length, 0, '送E��不要E);
+  assertEqual(result.total, 2000, '合計�E2000冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'A').balance, 0, 'Aの差額�E0冁E��相殺�E�E);
+  assertEqual(result.breakdown.find(b => b.id === 'B').balance, 0, 'Bの差額�E0冁E��相殺�E�E);
+  assertEqual(result.payments.length, 0, '送E��不要E);
 }
 console.log('');
 
-// チE��チE: 数量と税率の絁E��合わぁE
-console.log('【テスチE】数量と税率の絁E��合わぁE);
+// チE��チE: 数量と税率の絁E��合わぁE
+console.log('【テスチE】数量と税率の絁E��合わぁE);
 {
   const party = {
     participants: [
@@ -405,7 +405,7 @@ console.log('【テスチE】数量と税率の絁E��合わぁE);
       { id: 'B', name: 'B' }
     ],
     items: [
-      { id: 'i1', name: 'ビ�Eル', amountMinor: 500, qty: 2, tax: 10, payerId: 'A', mode: 'equal', selection: [] }
+      { id: 'i1', name: 'ビ�Eル', amountMinor: 500, qty: 2, tax: 10, payerId: 'A', mode: 'equal', selection: [] }
     ],
     settings: { roundUnit: 1, roundMode: 'nearest',  }
   };
@@ -413,23 +413,23 @@ console.log('【テスチE】数量と税率の絁E��合わぁE);
   const result = calculateSettlement(party);
   const subtotal = 500 * 2;  // 1000
   const withTax = Math.round(subtotal * 1.1);  // 1100
-  assertEqual(result.total, withTax, `合計�E${withTax}冁E);
-  assertEqual(result.breakdown.find(b => b.id === 'A').paid, withTax, `AぁE{withTax}冁E��て替ぁE);
+  assertEqual(result.total, withTax, `合計�E${withTax}冁E);
+  assertEqual(result.breakdown.find(b => b.id === 'A').paid, withTax, `AぁE{withTax}冁E��て替ぁE);
 }
 console.log('');
 
 // =====================================================
-// チE��ト結果
+// チE��ト結果
 // =====================================================
 
 console.log('========================================');
-console.log(`チE��ト結果: ${passCount}/${testCount} 成功`);
+console.log(`チE��ト結果: ${passCount}/${testCount} 成功`);
 console.log('========================================');
 
 if (passCount === testCount) {
-  console.log('✁EすべてのチE��トが成功しました�E�E);
+  console.log('✁EすべてのチE��トが成功しました�E�E);
   process.exit(0);
 } else {
-  console.log(`✁E${testCount - passCount}個�EチE��トが失敗しました。`);
+  console.log(`✁E${testCount - passCount}個�EチE��トが失敗しました。`);
   process.exit(1);
 }
