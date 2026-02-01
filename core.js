@@ -889,7 +889,7 @@ function enableItemRowEditing(row, item, party, focusField) {
   const payerSelect = payerCell.querySelector('select');
   
   // 按分モード選択
-  const modes = ['equal', 'selected'];
+  const modes = ['equal', 'selected', 'ratio'];
   const modeOptions = modes.map(m => 
     `<option value="${m}" ${m === (item.mode || 'equal') ? 'selected' : ''}>${t('mode' + capitalize(m))}</option>`
   ).join('');
