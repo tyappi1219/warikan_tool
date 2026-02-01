@@ -90,7 +90,12 @@ function calculateSettlement(party) {
         break;
       case 'equal':
       default:
-        targets = participants.map(p => p.id);
+        // If selection exists even in equal mode, prefer selected targets
+        if (item.selection && Array.isArray(item.selection) && item.selection.length > 0) {
+          targets = (item.selection || []).filter(id => participants.some(p => p.id === id));
+        } else {
+          targets = participants.map(p => p.id);
+        }
         break;
     }
 
@@ -415,6 +420,34 @@ console.log('【テスチE】数量と税率の絁E��合わぁE);
   const withTax = Math.round(subtotal * 1.1);  // 1100
   assertEqual(result.total, withTax, `合計�E${withTax}冁E);
   assertEqual(result.breakdown.find(b => b.id === 'A').paid, withTax, `AぁE{withTax}冁E��て替ぁE);
+}
+console.log('');
+
+// チェック: 等分モードでも選択対象がある場合はその対象だけで按分される
+console.log('【テスト】等分モードで選択対象がある場合に選択者のみで割ること');
+{
+  const party = {
+    participants: [
+      { id: 'A', name: 'A' },
+      { id: 'B', name: 'B' },
+      { id: 'C', name: 'C' },
+      { id: 'D', name: 'D' },
+      { id: 'E', name: 'E' }
+    ],
+    items: [
+      // 等分モードだが selection が指定されている（A,B,C のみ対象）
+      { id: 'iX', name: '特定注文', amountMinor: 900, qty: 1, payerId: 'A', mode: 'equal', selection: ['A','B','C'] }
+    ],
+    settings: { roundUnit: 1, roundMode: 'nearest' }
+  };
+
+  const result = calculateSettlement(party);
+  assertEqual(result.total, 900, '合計は900であること');
+  assertEqual(result.breakdown.find(b => b.id === 'A').shouldPay, 300, 'Aは300負担');
+  assertEqual(result.breakdown.find(b => b.id === 'B').shouldPay, 300, 'Bは300負担');
+  assertEqual(result.breakdown.find(b => b.id === 'C').shouldPay, 300, 'Cは300負担');
+  assertEqual(result.breakdown.find(b => b.id === 'D').shouldPay, 0, 'Dは0負担');
+  assertEqual(result.breakdown.find(b => b.id === 'E').shouldPay, 0, 'Eは0負担');
 }
 console.log('');
 
