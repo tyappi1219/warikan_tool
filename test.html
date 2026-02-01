@@ -174,7 +174,12 @@
             break;
           case 'equal':
           default:
-            targets = participants.map(p => p.id);
+            // If selection exists even in equal mode, prefer selected targets
+            if (item.selection && Array.isArray(item.selection) && item.selection.length > 0) {
+              targets = (item.selection || []).filter(id => participants.some(p => p.id === id));
+            } else {
+              targets = participants.map(p => p.id);
+            }
             break;
         }
 
@@ -459,6 +464,32 @@
       
       const result = calculateSettlement(party);
       assertEqual(result.total, 1100, '数量と税率', '合計�E1100冁E��E00冁E�EÁE.1�E�E);
+    }
+
+    // チE��チE: 等分モードでも選択対象がある場合はその対象だけで按分される
+    {
+      const party = {
+        participants: [
+          { id: 'A', name: 'A' },
+          { id: 'B', name: 'B' },
+          { id: 'C', name: 'C' },
+          { id: 'D', name: 'D' },
+          { id: 'E', name: 'E' }
+        ],
+        items: [
+          // 等分モードだが selection が指定されている（A,B,C のみ対象）
+          { id: 'iX', name: '特定注文', amountMinor: 900, qty: 1, 0, payerId: 'A', mode: 'equal', selection: ['A','B','C'] }
+        ],
+        settings: { roundUnit: 1, roundMode: 'nearest' }
+      };
+
+      const result = calculateSettlement(party);
+      assertEqual(result.total, 900, '等分+選択', '合計は900であること');
+      assertEqual(result.breakdown.find(b => b.id === 'A').shouldPay, 300, '等分+選択', 'Aは300負担（900÷3人）');
+      assertEqual(result.breakdown.find(b => b.id === 'B').shouldPay, 300, '等分+選択', 'Bは300負担（900÷3人）');
+      assertEqual(result.breakdown.find(b => b.id === 'C').shouldPay, 300, '等分+選択', 'Cは300負担（900÷3人）');
+      assertEqual(result.breakdown.find(b => b.id === 'D').shouldPay, 0, '等分+選択', 'Dは0負担（非対象）');
+      assertEqual(result.breakdown.find(b => b.id === 'E').shouldPay, 0, '等分+選択', 'Eは0負担（非対象）');
     }
 
     // =====================================================
