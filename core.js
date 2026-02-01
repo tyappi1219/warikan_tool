@@ -640,6 +640,8 @@ function renderParticipants() {
   party.participants.forEach(p => {
     const li = document.createElement('li');
     li.className = 'participant-chip';
+    li.dataset.participantId = p.id;
+    li.draggable = true;
     li.innerHTML = `
       <span class="participant-color" style="background: ${p.color}"></span>
       <span class="participant-name">${escapeHtml(p.name)}</span>
@@ -647,6 +649,40 @@ function renderParticipants() {
       <button type="button" class="btn btn-icon btn-delete-participant" data-id="${p.id}" aria-label="${t('delete')}">🗑️</button>
     `;
     list.appendChild(li);
+  });
+
+  // ドラッグ&ドロップ処理（参加者）
+  let draggedParticipantId = null;
+  $$('.participant-chip').forEach(li => {
+    li.addEventListener('dragstart', (e) => {
+      draggedParticipantId = li.dataset.participantId;
+      li.style.opacity = '0.5';
+    });
+    li.addEventListener('dragend', (e) => {
+      li.style.opacity = '1';
+      draggedParticipantId = null;
+    });
+    li.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      li.style.backgroundColor = 'var(--border)';
+    });
+    li.addEventListener('dragleave', () => {
+      li.style.backgroundColor = '';
+    });
+    li.addEventListener('drop', (e) => {
+      e.preventDefault();
+      li.style.backgroundColor = '';
+      if (draggedParticipantId && draggedParticipantId !== li.dataset.participantId) {
+        const draggedIdx = party.participants.findIndex(p => p.id === draggedParticipantId);
+        const targetIdx = party.participants.findIndex(p => p.id === li.dataset.participantId);
+        if (draggedIdx !== -1 && targetIdx !== -1) {
+          [party.participants[draggedIdx], party.participants[targetIdx]] = 
+          [party.participants[targetIdx], party.participants[draggedIdx]];
+          saveState();
+          renderEdit();
+        }
+      }
+    });
   });
 
   // イベント
@@ -699,15 +735,17 @@ function renderItems() {
       .filter(Boolean);
 
     const tr = document.createElement('tr');
+    tr.className = 'item-row';
+    tr.dataset.itemId = item.id;
+    tr.draggable = true;
     tr.innerHTML = `
-      <td>${escapeHtml(item.name)}</td>
-      <td>${formatCurrency(item.amountMinor)}</td>
-      <td>${item.qty || 1}</td>
-      <td>${payer ? escapeHtml(payer.name) : '-'}</td>
-      <td>${t('mode' + capitalize(item.mode || 'equal'))}</td>
+      <td class="cell-editable" data-field="name">${escapeHtml(item.name)}</td>
+      <td class="cell-editable" data-field="amount">${formatCurrency(item.amountMinor)}</td>
+      <td class="cell-editable" data-field="qty">${item.qty || 1}</td>
+      <td class="cell-editable" data-field="payer">${payer ? escapeHtml(payer.name) : '-'}</td>
+      <td class="cell-editable" data-field="mode">${t('mode' + capitalize(item.mode || 'equal'))}</td>
       <td class="participants-cell">
-        ${targets.slice(0, 3).map(p => `<span class="mini-chip"><span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}</span>`).join('')}
-        ${targets.length > 3 ? `<span class="mini-chip">+${targets.length - 3}</span>` : ''}
+        ${targets.map(p => `<span class="mini-chip"><span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}</span>`).join('')}
       </td>
       <td>
         <button type="button" class="btn btn-sm btn-ghost btn-edit-item" data-id="${item.id}">✏️</button>
@@ -718,6 +756,34 @@ function renderItems() {
   });
 
   // イベント
+  // セルクリックで編集を起動
+  $$('.cell-editable').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const row = cell.closest('.item-row');
+      const itemId = row.dataset.itemId;
+      editingItemId = itemId;
+      const item = party.items.find(x => x.id === editingItemId);
+      if (item) {
+        $('#itemName').value = item.name;
+        $('#itemAmount').value = item.amountMinor;
+        $('#itemQty').value = item.qty || 1;
+        updatePayerSelect();
+        $('#itemPayer').value = item.payerId || '';
+        $('#itemMode').value = item.mode || 'equal';
+        updateItemSelectionUI();
+        if (item.selection) {
+          item.selection.forEach(id => {
+            const cb = $(`#itemSelection input[value="${id}"]`);
+            if (cb) cb.checked = true;
+          });
+        }
+        $('#itemModalTitle').textContent = t('edit');
+        $('#btnSaveItem').textContent = t('update');
+        openModal('modalItem');
+      }
+    });
+  });
+
   $$('.btn-edit-item').forEach(btn => {
     btn.addEventListener('click', () => {
       editingItemId = btn.dataset.id;
@@ -749,6 +815,40 @@ function renderItems() {
         party.items = party.items.filter(i => i.id !== btn.dataset.id);
         saveState();
         renderEdit();
+      }
+    });
+  });
+
+  // ドラッグ&ドロップ処理（アイテム）
+  let draggedItemId = null;
+  $$('.item-row').forEach(tr => {
+    tr.addEventListener('dragstart', (e) => {
+      draggedItemId = tr.dataset.itemId;
+      tr.style.opacity = '0.5';
+    });
+    tr.addEventListener('dragend', (e) => {
+      tr.style.opacity = '1';
+      draggedItemId = null;
+    });
+    tr.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      tr.style.backgroundColor = 'var(--border)';
+    });
+    tr.addEventListener('dragleave', () => {
+      tr.style.backgroundColor = '';
+    });
+    tr.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tr.style.backgroundColor = '';
+      if (draggedItemId && draggedItemId !== tr.dataset.itemId) {
+        const draggedIdx = party.items.findIndex(i => i.id === draggedItemId);
+        const targetIdx = party.items.findIndex(i => i.id === tr.dataset.itemId);
+        if (draggedIdx !== -1 && targetIdx !== -1) {
+          [party.items[draggedIdx], party.items[targetIdx]] = 
+          [party.items[targetIdx], party.items[draggedIdx]];
+          saveState();
+          renderEdit();
+        }
       }
     });
   });

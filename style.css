@@ -290,6 +290,13 @@ main {
   font-size: var(--font-size-base);
 }
 
+#btnAddParticipant,
+#btnAddItem {
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+}
+
 .link-btn {
   background: none;
   border: none;
@@ -580,6 +587,50 @@ main {
 
 .items-table tbody tr:hover {
   background: var(--bg-hover);
+}
+
+.cell-editable {
+  cursor: pointer;
+  position: relative;
+  transition: background var(--transition);
+}
+
+.cell-editable:hover {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.cell-editable::after {
+  content: '✎';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity var(--transition);
+  color: var(--text-muted);
+}
+
+.cell-editable:hover::after {
+  opacity: 1;
+}
+
+.item-row {
+  position: relative;
+  transition: opacity var(--transition);
+}
+
+.item-row[draggable="true"] {
+  cursor: move;
+}
+
+.participant-chip {
+  transition: opacity var(--transition);
+}
+
+.participant-chip[draggable="true"] {
+  cursor: move;
 }
 
 .items-table .input,
