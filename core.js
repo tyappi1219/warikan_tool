@@ -377,7 +377,12 @@ function calculateSettlement(party) {
         break;
       case 'equal':
       default:
-        targets = participants.map(p => p.id);
+        // 既に対象者選択 (item.selection) があればそれを優先して按分する
+        if (item.selection && Array.isArray(item.selection) && item.selection.length > 0) {
+          targets = (item.selection || []).filter(id => participants.some(p => p.id === id));
+        } else {
+          targets = participants.map(p => p.id);
+        }
         break;
     }
 
