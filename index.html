@@ -260,6 +260,22 @@
   <!-- トースト -->
   <div id="toastContainer" class="toast-container" role="alert" aria-live="polite"></div>
 
+      <!-- 計算過程モーダル -->
+      <div id="modalCalcSteps" class="modal hidden" role="dialog" aria-labelledby="calcStepsTitle" aria-modal="true">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-content modal-lg">
+          <div class="modal-header">
+            <h2 id="calcStepsTitle">計算過程</h2>
+            <button type="button" class="btn btn-icon modal-close" data-close-modal aria-label="閉じる">✕</button>
+          </div>
+          <div class="modal-body" id="calcStepsBody" style="white-space: pre-wrap; font-family: monospace;">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary modal-close" data-close-modal>閉じる</button>
+          </div>
+        </div>
+      </div>
+
   <footer class="footer">
     <p>© 2026 割り勘ツール | <button type="button" id="btnImport" class="link-btn" data-i18n="import">インポート</button></p>
   </footer>

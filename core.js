@@ -345,6 +345,10 @@ function calculateSettlement(party) {
     return { breakdown: {}, payments: [], total: 0 };
   }
 
+  // 計算過程収集マップ
+  const stepsMap = {};
+  participants.forEach(p => { stepsMap[p.id] = []; });
+
   // 各参加者の支払額と負担額を計算
   const paid = {}; // 誰がいくら立て替えたか
   const shouldPay = {}; // 誰がいくら負担すべきか
@@ -386,9 +390,17 @@ function calculateSettlement(party) {
     const shares = targets.map(id => ({ id, raw: shareRaw }));
     const distributed = distributeRemainder(shares, subtotal, roundUnit);
 
+    // 分配結果を記録
     Object.entries(distributed).forEach(([id, amount]) => {
       shouldPay[id] = (shouldPay[id] || 0) + amount;
+      const participantName = participants.find(p => p.id === id)?.name || id;
+      stepsMap[id].push(`アイテム「${item.name}」: 小計 ${formatCurrency(subtotal)} ÷ ${targets.length}人 = ${Math.round(shareRaw*100)/100} → 配分 ${formatCurrency(amount)}`);
     });
+
+    // 支払者の立替ログ
+    if (item.payerId && stepsMap[item.payerId]) {
+      stepsMap[item.payerId].push(`アイテム「${item.name}」を立替: ${formatCurrency(subtotal)}`);
+    }
   });
 
   // 負担額の端数調整（全体で合計が一致するように）
@@ -407,8 +419,8 @@ function calculateSettlement(party) {
     balance[p.id] = paid[p.id] - shouldPay[p.id];
   });
 
-  // 最小決済計算
-  const payments = calculateMinimumPayments(balance, participants);
+  // 最小決済計算（ステップ付き）
+  const pm = calculateMinimumPayments(balance, participants);
 
   return {
     breakdown: participants.map(p => ({
@@ -417,9 +429,10 @@ function calculateSettlement(party) {
       color: p.color,
       paid: paid[p.id],
       shouldPay: shouldPay[p.id],
-      balance: balance[p.id]
+      balance: balance[p.id],
+      calcSteps: (stepsMap[p.id] || []).join('\n') || '計算過程はありません'
     })),
-    payments,
+    payments: pm.payments,
     total: grandTotal
   };
 }
@@ -444,6 +457,7 @@ function calculateMinimumPayments(balance, participants) {
   debtors.sort((a, b) => b.amount - a.amount);
 
   const payments = [];
+  const steps = [];
 
   while (creditors.length > 0 && debtors.length > 0) {
     const creditor = creditors[0];
@@ -451,11 +465,16 @@ function calculateMinimumPayments(balance, participants) {
     const amount = Math.min(creditor.amount, debtor.amount);
 
     if (amount > 0) {
+      const fromName = participants.find(p => p.id === debtor.id)?.name || debtor.id;
+      const toName = participants.find(p => p.id === creditor.id)?.name || creditor.id;
+      const step = `${fromName} → ${toName}: ${formatCurrency(amount)}`;
       payments.push({
         from: debtor.id,
         to: creditor.id,
-        amountMinor: amount
+        amountMinor: amount,
+        calcSteps: step
       });
+      steps.push(step);
     }
 
     creditor.amount -= amount;
@@ -465,7 +484,7 @@ function calculateMinimumPayments(balance, participants) {
     if (debtor.amount === 0) debtors.shift();
   }
 
-  return payments;
+  return { payments, steps };
 }
 
 // =====================================================
@@ -780,7 +799,7 @@ function renderResult() {
   // 内訳カード
   const breakdownContainer = $('#breakdownCards');
   breakdownContainer.innerHTML = result.breakdown.map(b => `
-    <div class="breakdown-card" style="border-left-color: ${b.color}">
+    <div class="breakdown-card calc-click" data-type="breakdown" data-participant-id="${b.id}" style="border-left-color: ${b.color}">
       <div class="breakdown-card-header">
         <span class="participant-color" style="background: ${b.color}"></span>
         <span class="breakdown-card-name">${escapeHtml(b.name)}</span>
@@ -810,11 +829,11 @@ function renderResult() {
   if (result.payments.length === 0) {
     paymentContainer.innerHTML = `<div class="no-payment">${t('noPaymentNeeded')}</div>`;
   } else {
-    paymentContainer.innerHTML = result.payments.map(p => {
+    paymentContainer.innerHTML = result.payments.map((p, idx) => {
       const from = party.participants.find(x => x.id === p.from);
       const to = party.participants.find(x => x.id === p.to);
       return `
-        <div class="payment-card">
+        <div class="payment-card calc-click" data-type="payment" data-payment-idx="${idx}">
           <div class="payment-from">
             <span class="participant-color" style="background: ${from?.color || '#ccc'}"></span>
             <span>${escapeHtml(from?.name || '?')}</span>
@@ -829,6 +848,32 @@ function renderResult() {
       `;
     }).join('');
   }
+
+  // 計算過程を表示するクリックイベント
+  $$('.calc-click').forEach(el => {
+    el.addEventListener('click', () => {
+      const type = el.dataset.type;
+      if (type === 'breakdown') {
+        const id = el.dataset.participantId;
+        const b = result.breakdown.find(x => x.id === id);
+        const title = `個人内訳: ${b.name}`;
+        const body = `支払: ${formatCurrency(b.paid)}\n負担: ${formatCurrency(b.shouldPay)}\n差額: ${b.balance >= 0 ? '+' : ''}${formatCurrency(b.balance)}\n\n計算過程:\n${b.calcSteps}`;
+        $('#calcStepsTitle').textContent = title;
+        $('#calcStepsBody').textContent = body;
+        openModal('modalCalcSteps');
+      } else if (type === 'payment') {
+        const idx = parseInt(el.dataset.paymentIdx, 10);
+        const p = result.payments[idx];
+        const from = party.participants.find(x => x.id === p.from)?.name || p.from;
+        const to = party.participants.find(x => x.id === p.to)?.name || p.to;
+        const title = `送金: ${from} → ${to}`;
+        const body = `金額: ${formatCurrency(p.amountMinor)}\n\n決済過程:\n${p.calcSteps || '—'}`;
+        $('#calcStepsTitle').textContent = title;
+        $('#calcStepsBody').textContent = body;
+        openModal('modalCalcSteps');
+      }
+    });
+  });
 }
 
 // =====================================================
