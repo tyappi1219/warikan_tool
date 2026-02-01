@@ -152,22 +152,6 @@ const I18N = {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-function getWeekdayDisplay(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr + 'T00:00:00');
-  if (isNaN(date.getTime())) return ''; // 無効な日付チェック
-  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
-  return weekdayNames[date.getDay()];
-}
-
-function updateDateDisplay(dateStr) {
-  const weekday = getWeekdayDisplay(dateStr);
-  const display = $('#partyDateDisplay');
-  if (display) {
-    display.textContent = weekday ? `（${weekday}）` : '';
-  }
-}
-
 function uuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = Math.random() * 16 | 0;
@@ -616,7 +600,6 @@ function renderEdit() {
 
   $('#partyName').value = party.name;
   $('#partyDate').value = party.date;
-  updateDateDisplay(party.date);
 
   renderParticipants();
   renderItems();
@@ -1053,7 +1036,6 @@ function bindEvents() {
     const party = getCurrentParty();
     if (party) {
       party.date = e.target.value;
-      updateDateDisplay(party.date);
       saveState();
     }
   });
