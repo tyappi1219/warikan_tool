@@ -152,6 +152,20 @@ const I18N = {
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+function getWeekdayDisplay(dateStr) {
+  const date = new Date(dateStr + 'T00:00:00');
+  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  return weekdayNames[date.getDay()];
+}
+
+function updateDateDisplay(dateStr) {
+  const weekday = getWeekdayDisplay(dateStr);
+  const display = $('#partyDateDisplay');
+  if (display) {
+    display.textContent = weekday ? `（${weekday}）` : '';
+  }
+}
+
 function uuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = Math.random() * 16 | 0;
@@ -600,6 +614,7 @@ function renderEdit() {
 
   $('#partyName').value = party.name;
   $('#partyDate').value = party.date;
+  updateDateDisplay(party.date);
 
   renderParticipants();
   renderItems();
@@ -987,6 +1002,11 @@ function toggleTheme() {
 // =====================================================
 function bindEvents() {
   // トップバー
+  $('#btnLogoHome').addEventListener('click', () => {
+    showView('viewHome');
+    renderHome();
+  });
+
   $('#btnLang').addEventListener('click', () => {
     currentLang = currentLang === 'ja' ? 'en' : 'ja';
     state.settings.lang = currentLang;
@@ -1031,6 +1051,7 @@ function bindEvents() {
     const party = getCurrentParty();
     if (party) {
       party.date = e.target.value;
+      updateDateDisplay(party.date);
       saveState();
     }
   });

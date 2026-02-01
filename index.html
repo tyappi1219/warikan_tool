@@ -9,7 +9,9 @@
 </head>
 <body>
   <header class="topbar">
-    <h1 class="logo">💰 <span data-i18n="appTitle">割り勘ツール</span></h1>
+    <button type="button" id="btnLogoHome" class="logo-btn" aria-label="ホームに戻る">
+      <h1 class="logo">💰 <span data-i18n="appTitle">割り勘ツール</span></h1>
+    </button>
     <nav class="topbar-actions">
       <button type="button" id="btnLang" class="btn btn-icon" title="言語切替" aria-label="言語切替">🌐</button>
       <button type="button" id="btnTheme" class="btn btn-icon" title="テーマ切替" aria-label="テーマ切替">🌙</button>
@@ -37,7 +39,10 @@
       <div class="section-header">
         <button type="button" id="btnBackHome" class="btn btn-ghost" aria-label="戻る">← <span data-i18n="back">戻る</span></button>
         <input type="text" id="partyName" class="input-title" placeholder="パーティ名" aria-label="パーティ名">
-        <input type="date" id="partyDate" class="input-date" aria-label="開催日">
+        <div class="date-input-group">
+          <input type="date" id="partyDate" class="input-date" aria-label="開催日">
+          <span id="partyDateDisplay" class="date-display"></span>
+        </div>
       </div>
 
       <div class="edit-layout">
