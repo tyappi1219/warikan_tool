@@ -739,12 +739,12 @@ function renderItems() {
     tr.dataset.itemId = item.id;
     tr.draggable = true;
     tr.innerHTML = `
-      <td class="cell-editable" data-field="name">${escapeHtml(item.name)}</td>
-      <td class="cell-editable" data-field="amount">${formatCurrency(item.amountMinor)}</td>
-      <td class="cell-editable" data-field="qty">${item.qty || 1}</td>
-      <td class="cell-editable" data-field="payer">${payer ? escapeHtml(payer.name) : '-'}</td>
-      <td class="cell-editable" data-field="mode">${t('mode' + capitalize(item.mode || 'equal'))}</td>
-      <td class="participants-cell">
+      <td class="cell-view" data-field="name">${escapeHtml(item.name)}</td>
+      <td class="cell-view" data-field="amount">${formatCurrency(item.amountMinor)}</td>
+      <td class="cell-view" data-field="qty">${item.qty || 1}</td>
+      <td class="cell-view" data-field="payer">${payer ? escapeHtml(payer.name) : '-'}</td>
+      <td class="cell-view" data-field="mode">${t('mode' + capitalize(item.mode || 'equal'))}</td>
+      <td class="cell-view" data-field="targets">
         ${targets.map(p => `<span class="mini-chip"><span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}</span>`).join('')}
       </td>
       <td>
@@ -755,57 +755,20 @@ function renderItems() {
     tbody.appendChild(tr);
   });
 
-  // イベント
-  // セルクリックで編集を起動
-  $$('.cell-editable').forEach(cell => {
-    cell.addEventListener('click', () => {
+  // イベント：セルクリックで編集モード切り替え
+  $$('.cell-view').forEach(cell => {
+    cell.addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn')) return;
       const row = cell.closest('.item-row');
       const itemId = row.dataset.itemId;
-      editingItemId = itemId;
-      const item = party.items.find(x => x.id === editingItemId);
-      if (item) {
-        $('#itemName').value = item.name;
-        $('#itemAmount').value = item.amountMinor;
-        $('#itemQty').value = item.qty || 1;
-        updatePayerSelect();
-        $('#itemPayer').value = item.payerId || '';
-        $('#itemMode').value = item.mode || 'equal';
-        updateItemSelectionUI();
-        if (item.selection) {
-          item.selection.forEach(id => {
-            const cb = $(`#itemSelection input[value="${id}"]`);
-            if (cb) cb.checked = true;
-          });
-        }
-        $('#itemModalTitle').textContent = t('edit');
-        $('#btnSaveItem').textContent = t('update');
-        openModal('modalItem');
-      }
-    });
-  });
-
-  $$('.btn-edit-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      editingItemId = btn.dataset.id;
-      const item = party.items.find(x => x.id === editingItemId);
-      if (item) {
-        $('#itemName').value = item.name;
-        $('#itemAmount').value = item.amountMinor;
-        $('#itemQty').value = item.qty || 1;
-        updatePayerSelect();
-        $('#itemPayer').value = item.payerId || '';
-        $('#itemMode').value = item.mode || 'equal';
-        updateItemSelectionUI();
-        if (item.selection) {
-          item.selection.forEach(id => {
-            const cb = $(`#itemSelection input[value="${id}"]`);
-            if (cb) cb.checked = true;
-          });
-        }
-        $('#itemModalTitle').textContent = t('edit');
-        $('#btnSaveItem').textContent = t('update');
-        openModal('modalItem');
-      }
+      const field = cell.dataset.field;
+      
+      if (row.classList.contains('editing')) return;
+      
+      const item = party.items.find(i => i.id === itemId);
+      if (!item) return;
+      
+      enableItemRowEditing(row, item, party, field);
     });
   });
 
@@ -892,6 +855,107 @@ function updateItemSelectionUI() {
       ${escapeHtml(p.name)}
     </label>
   `).join('');
+}
+
+// ----- インライン編集関数 -----
+function enableItemRowEditing(row, item, party, focusField) {
+  row.classList.add('editing');
+  
+  const cells = row.querySelectorAll('.cell-view');
+  const nameCell = cells[0];
+  const amountCell = cells[1];
+  const qtyCell = cells[2];
+  const payerCell = cells[3];
+  const modeCell = cells[4];
+  const targetsCell = cells[5];
+  
+  // 品名編集
+  nameCell.innerHTML = `<input type="text" class="inline-input" value="${escapeHtml(item.name)}" placeholder="品名" />`;
+  const nameInput = nameCell.querySelector('input');
+  
+  // 金額編集
+  amountCell.innerHTML = `<input type="number" class="inline-input" value="${item.amountMinor}" placeholder="0" min="0" />`;
+  const amountInput = amountCell.querySelector('input');
+  
+  // 数量編集
+  qtyCell.innerHTML = `<input type="number" class="inline-input" value="${item.qty || 1}" min="1" />`;
+  const qtyInput = qtyCell.querySelector('input');
+  
+  // 支払者選択
+  const payerOptions = party.participants.map(p => 
+    `<option value="${p.id}" ${p.id === item.payerId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+  ).join('');
+  payerCell.innerHTML = `<select class="inline-select">${payerOptions}</select>`;
+  const payerSelect = payerCell.querySelector('select');
+  
+  // 按分モード選択
+  const modes = ['equal', 'selected'];
+  const modeOptions = modes.map(m => 
+    `<option value="${m}" ${m === (item.mode || 'equal') ? 'selected' : ''}>${t('mode' + capitalize(m))}</option>`
+  ).join('');
+  modeCell.innerHTML = `<select class="inline-select">${modeOptions}</select>`;
+  const modeSelect = modeCell.querySelector('select');
+  
+  // 対象者選択
+  const targetCheckboxes = party.participants.map(p => {
+    const isSelected = (item.selection || party.participants.map(x => x.id)).includes(p.id);
+    return `<label class="inline-checkbox"><input type="checkbox" value="${p.id}" ${isSelected ? 'checked' : ''} />${escapeHtml(p.name)}</label>`;
+  }).join('');
+  targetsCell.innerHTML = `<div class="inline-targets">${targetCheckboxes}</div>`;
+  
+  // 保存・キャンセルボタン
+  const actionCell = row.querySelector('td:last-child');
+  actionCell.innerHTML = `
+    <button type="button" class="btn btn-sm btn-primary btn-save-item">💾</button>
+    <button type="button" class="btn btn-sm btn-ghost btn-cancel-item">✕</button>
+  `;
+  
+  const saveBtn = actionCell.querySelector('.btn-save-item');
+  const cancelBtn = actionCell.querySelector('.btn-cancel-item');
+  
+  // 保存処理
+  const saveEdit = () => {
+    item.name = nameInput.value.trim();
+    item.amountMinor = parseInt(amountInput.value) || 0;
+    item.qty = parseInt(qtyInput.value) || 1;
+    item.payerId = payerSelect.value;
+    item.mode = modeSelect.value;
+    
+    // 対象者を取得
+    const selectedTargets = [];
+    targetsCell.querySelectorAll('input:checked').forEach(cb => {
+      selectedTargets.push(cb.value);
+    });
+    item.selection = selectedTargets.length > 0 ? selectedTargets : [];
+    
+    saveState();
+    row.classList.remove('editing');
+    renderEdit();
+  };
+  
+  saveBtn.addEventListener('click', saveEdit);
+  cancelBtn.addEventListener('click', () => {
+    row.classList.remove('editing');
+    renderEdit();
+  });
+  
+  // Enterキーで保存、Escキーでキャンセル
+  const handleKeydown = (e) => {
+    if (e.key === 'Enter') saveEdit();
+    if (e.key === 'Escape') {
+      row.classList.remove('editing');
+      renderEdit();
+    }
+  };
+  nameInput.addEventListener('keydown', handleKeydown);
+  amountInput.addEventListener('keydown', handleKeydown);
+  qtyInput.addEventListener('keydown', handleKeydown);
+  
+  // フォーカスを当てる
+  if (focusField === 'name') nameInput.focus();
+  else if (focusField === 'amount') amountInput.focus();
+  else if (focusField === 'qty') qtyInput.focus();
+  else nameInput.focus();
 }
 
 // ----- 結果画面 -----
