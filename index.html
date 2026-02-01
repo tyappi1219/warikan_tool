@@ -63,7 +63,6 @@
                   <th data-i18n="itemName">品名</th>
                   <th data-i18n="amount">金額</th>
                   <th data-i18n="qty">数量</th>
-                  <th data-i18n="tax">税率</th>
                   <th data-i18n="payer">支払者</th>
                   <th data-i18n="splitMode">按分</th>
                   <th data-i18n="targetParticipants">対象者</th>
@@ -147,10 +146,6 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="settingDefaultTax" data-i18n="defaultTax">デフォルト税率 (%)</label>
-          <input type="number" id="settingDefaultTax" class="input" value="10" min="0" max="100">
-        </div>
-        <div class="form-group">
           <label for="settingCurrency" data-i18n="currency">通貨</label>
           <select id="settingCurrency" class="select">
             <option value="JPY">JPY (円)</option>
@@ -215,14 +210,6 @@
           <div class="form-group">
             <label for="itemQty" data-i18n="qty">数量</label>
             <input type="number" id="itemQty" class="input" value="1" min="1">
-          </div>
-          <div class="form-group">
-            <label for="itemTax" data-i18n="tax">税率 (%)</label>
-            <select id="itemTax" class="select">
-              <option value="0">0% (税なし)</option>
-              <option value="8">8% (軽減税率)</option>
-              <option value="10" selected>10% (標準税率)</option>
-            </select>
           </div>
         </div>
         <div class="form-row">

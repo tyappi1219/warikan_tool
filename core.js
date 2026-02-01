@@ -20,7 +20,6 @@ const I18N = {
     itemName: '品名',
     amount: '金額',
     qty: '数量',
-    tax: '税率',
     payer: '支払者',
     splitMode: '按分',
     targetParticipants: '対象者',
@@ -42,7 +41,6 @@ const I18N = {
     roundNearest: '四捨五入',
     roundCeil: '切り上げ',
     roundFloor: '切り捨て',
-    defaultTax: 'デフォルト税率 (%)',
     currency: '通貨',
     save: '保存',
     addParticipant: '参加者追加',
@@ -90,7 +88,6 @@ const I18N = {
     itemName: 'Item Name',
     amount: 'Amount',
     qty: 'Qty',
-    tax: 'Tax',
     payer: 'Payer',
     splitMode: 'Split',
     targetParticipants: 'Targets',
@@ -112,7 +109,6 @@ const I18N = {
     roundNearest: 'Round',
     roundCeil: 'Ceil',
     roundFloor: 'Floor',
-    defaultTax: 'Default Tax (%)',
     currency: 'Currency',
     save: 'Save',
     addParticipant: 'Add Participant',
@@ -183,7 +179,6 @@ const SETTINGS_KEY = 'splitbill_settings';
 const defaultSettings = {
   roundUnit: 1,
   roundMode: 'nearest',
-  taxDefault: 10,
   currency: 'JPY',
   lang: 'ja',
   theme: 'auto'
@@ -232,8 +227,7 @@ function createParty(name = '新しいパーティ') {
     currency: state.settings.currency,
     settings: {
       roundUnit: state.settings.roundUnit,
-      roundMode: state.settings.roundMode,
-      taxDefault: state.settings.taxDefault
+      roundMode: state.settings.roundMode
     },
     participants: [],
     items: []
@@ -345,7 +339,7 @@ function distributeRemainder(shares, total, unit) {
 function calculateSettlement(party) {
   const participants = party.participants;
   const items = party.items;
-  const { roundUnit, roundMode, taxDefault } = party.settings;
+  const { roundUnit, roundMode } = party.settings;
 
   if (participants.length === 0) {
     return { breakdown: {}, payments: [], total: 0 };
@@ -363,14 +357,12 @@ function calculateSettlement(party) {
   let grandTotal = 0;
 
   items.forEach(item => {
-    const taxRate = item.tax ?? taxDefault;
     const subtotal = item.amountMinor * (item.qty || 1);
-    const withTax = Math.round(subtotal * (1 + taxRate / 100));
-    grandTotal += withTax;
+    grandTotal += subtotal;
 
     // 支払者の立替額に加算
     if (item.payerId && paid[item.payerId] !== undefined) {
-      paid[item.payerId] += withTax;
+      paid[item.payerId] += subtotal;
     }
 
     // 按分対象者を決定
@@ -390,9 +382,9 @@ function calculateSettlement(party) {
     }
 
     // 按分計算
-    const shareRaw = withTax / targets.length;
+    const shareRaw = subtotal / targets.length;
     const shares = targets.map(id => ({ id, raw: shareRaw }));
-    const distributed = distributeRemainder(shares, withTax, roundUnit);
+    const distributed = distributeRemainder(shares, subtotal, roundUnit);
 
     Object.entries(distributed).forEach(([id, amount]) => {
       shouldPay[id] = (shouldPay[id] || 0) + amount;
@@ -687,7 +679,6 @@ function renderItems() {
       <td>${escapeHtml(item.name)}</td>
       <td>${formatCurrency(item.amountMinor)}</td>
       <td>${item.qty || 1}</td>
-      <td>${item.tax}%</td>
       <td>${payer ? escapeHtml(payer.name) : '-'}</td>
       <td>${t('mode' + capitalize(item.mode || 'equal'))}</td>
       <td class="participants-cell">
@@ -711,7 +702,6 @@ function renderItems() {
         $('#itemName').value = item.name;
         $('#itemAmount').value = item.amountMinor;
         $('#itemQty').value = item.qty || 1;
-        $('#itemTax').value = item.tax;
         updatePayerSelect();
         $('#itemPayer').value = item.payerId || '';
         $('#itemMode').value = item.mode || 'equal';
@@ -1097,7 +1087,6 @@ function bindEvents() {
     $('#itemName').value = '';
     $('#itemAmount').value = '';
     $('#itemQty').value = 1;
-    $('#itemTax').value = party.settings.taxDefault;
     updatePayerSelect();
     $('#itemMode').value = 'equal';
     updateItemSelectionUI();
@@ -1120,7 +1109,6 @@ function bindEvents() {
     if (!name || amount <= 0) return;
 
     const qty = parseInt($('#itemQty').value) || 1;
-    const tax = parseInt($('#itemTax').value) || 0;
     const payerId = $('#itemPayer').value;
     const mode = $('#itemMode').value;
 
@@ -1135,7 +1123,6 @@ function bindEvents() {
         item.name = name;
         item.amountMinor = amount;
         item.qty = qty;
-        item.tax = tax;
         item.payerId = payerId;
         item.mode = mode;
         item.selection = selection;
@@ -1146,7 +1133,6 @@ function bindEvents() {
         name,
         amountMinor: amount,
         qty,
-        tax,
         payerId,
         mode,
         selection
@@ -1179,7 +1165,6 @@ function bindEvents() {
   $('#btnSaveSettings').addEventListener('click', () => {
     state.settings.roundUnit = parseInt($('#settingRoundUnit').value);
     state.settings.roundMode = $('#settingRoundMode').value;
-    state.settings.taxDefault = parseInt($('#settingDefaultTax').value);
     state.settings.currency = $('#settingCurrency').value;
 
     // 現在のパーティにも適用
@@ -1187,8 +1172,7 @@ function bindEvents() {
     if (party) {
       party.settings = {
         roundUnit: state.settings.roundUnit,
-        roundMode: state.settings.roundMode,
-        taxDefault: state.settings.taxDefault
+        roundMode: state.settings.roundMode
       };
     }
 
